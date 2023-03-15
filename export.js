@@ -89,6 +89,16 @@ async function main() {
             process.exit(1);
         }
 
+        var username = process.argv[6]
+        var password = process.argv[7]
+        var tryWithLogin = false;
+        if(username != undefined || password != undefined) {
+            tryWithLogin = true;
+        }
+
+        console.info("Starting with the following settings: \nurl: " + url + "\nexportname: " + exportname + "\nduration: " + duration + "\nconvert: " + convert + "\nUse Login: " + tryWithLogin + "\nusername: " + username + "\npassword: " + "********");
+        console.info ("\nStarting browser");
+
         browser = await puppeteer.launch(options)
         const pages = await browser.pages()
 
@@ -100,12 +110,21 @@ async function main() {
         });
 
         await page._client.send('Emulation.clearDeviceMetricsOverride')
+
+        // Login in with basic auth if needed
+        if(tryWithLogin){
+            console.info("Trying to login with basic auth");
+            await page.authenticate({ username, password });
+        }
+
         // Catch URL unreachable error
         await page.goto(url, { waitUntil: 'networkidle2' }).catch(e => {
             console.error('Recording URL unreachable!');
             process.exit(2);
         })
         await page.setBypassCSP(true)
+
+        console.info("Successfully loaded page")
 
         let pageMessage = '';
 
@@ -129,6 +148,8 @@ async function main() {
             process.exit(1);
         }
 
+        console.info("Recording found")
+
         var recDuration;
 
         // Get recording duration
@@ -147,6 +168,8 @@ async function main() {
                 return document.getElementById("video").duration
             });
         }
+
+        console.info("Recording duration: " + recDuration + " seconds")
 
         // If duration was set to 0 or is greater than recDuration, use recDuration value
         if (duration == 0 || duration > recDuration) {
@@ -173,7 +196,11 @@ async function main() {
         })
 
         // Perform any actions that have to be captured in the exported video
-        await page.waitFor((duration * 1000))
+        for(var i = 0; i < duration + 60; i+=60) {
+            console.info("loading recording for " + i / 60 + " Minutes");
+            await page.waitFor(1000 * 60);
+        }
+        console.info("loading recording finished");
 
         await page.evaluate(filename => {
             window.postMessage({ type: 'SET_EXPORT_PATH', filename: filename }, '*')
@@ -181,13 +208,18 @@ async function main() {
         }, exportname)
 
         // Wait for download of webm to complete
+        console.info("Waiting for download to complete")
         await page.waitForSelector('html.downloadComplete', { timeout: 0 })
+
+        console.info("Download complete")
 
         if (convert) {
             convertAndCopy(exportname)
         } else {
-            copyOnly(exportname)
+            copyAndDelete(exportname)
         }
+
+        console.log("Done")
 
     } catch (err) {
         console.log(err)
@@ -201,9 +233,11 @@ async function main() {
     }
 }
 
+console.info("Hello World, starting BBB-recorder!");
 main()
 
 function convertAndCopy(filename) {
+    copyOnly(filename)
 
     var copyFromPath = homedir + "/Downloads";
     var onlyfileName = filename.split(".webm")
@@ -214,7 +248,6 @@ function convertAndCopy(filename) {
     if (!fs.existsSync(copyToPath)) {
         fs.mkdirSync(copyToPath);
     }
-
     console.log(copyTo);
     console.log(copyFrom);
 
@@ -255,7 +288,7 @@ function convertAndCopy(filename) {
 }
 
 function copyOnly(filename) {
-
+    console.log("copying File")
     var copyFrom = homedir + "/Downloads/" + filename;
     var copyTo = copyToPath + "/" + filename;
 
@@ -267,7 +300,14 @@ function copyOnly(filename) {
 
         fs.copyFileSync(copyFrom, copyTo)
         console.log('successfully copied ' + copyTo);
+    } catch (err) {
+        console.log(err)
+    }
+}
 
+function copyAndDelete(filename) {
+    copyOnly(filename)
+    try {
         fs.unlinkSync(copyFrom);
         console.log('successfully delete ' + copyFrom);
     } catch (err) {

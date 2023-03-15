@@ -62,19 +62,19 @@ In this case we specify `--detach` which means the container will run in backgro
 For the [recording export](#recording-export) example this would be:
 
 ```bash
-docker run --detach -v ~/local-output-dir:/output bbb-recorder node export.js "https://BBB_HOST/playback/presentation/2.0/playback.html?meetingId=MEETING_ID" meeting.webm 10 true
+docker run --detach -v ~/local-output-dir:/output bbb-recorder node export.js "https://BBB_HOST/playback/presentation/2.0/playback.html?meetingId=MEETING_ID" meeting.webm 10 true "username" "password"
 ```
 
 You can simplify this task with an alias:
 ```bash
 alias bbb='docker run --detach -v ~/local-output-dir:/output bbb-recorder node export.js'
-bbb "https://BBB_HOST/playback/presentation/2.0/playback.html?meetingId=MEETING_ID" meeting.webm 10 true
+bbb "https://BBB_HOST/playback/presentation/2.0/playback.html?meetingId=MEETING_ID" meeting.webm 10 true "username" "password"
 ```
 
 ### Recording export
 
 ```bash
-node export.js "https://BBB_HOST/playback/presentation/2.0/playback.html?meetingId=MEETING_ID" meeting.webm 10 true
+node export.js "https://BBB_HOST/playback/presentation/2.0/playback.html?meetingId=MEETING_ID" meeting.webm 10 true "username" "password"
 ```
 
 **Options**
@@ -85,7 +85,11 @@ You can pass 4 args
 2) (Optional) Export file name (should be `.webm` at end). You can use "MEETING_ID" (without `.webm`) to set the meeting ID as export name. Default: MEETING_ID
 3) (Optional) Duration of recording (in seconds). You can set it to 0 use the real duration of recording. Default: real duration of recording
 4) (Optional) Convert to mp4 or not (true for convert to mp4). Default: false
+5) (Optional) Your Username for BBB Server (if needed)
+6) (Optional) Your Password for BBB Server (if needed)
 
+### Authentication
+The Programm can Login you in at the Big Blue Button Server. Currently the Programm can only use HTTP Basic Auth Login. If your BBB Server uses another Login Method, the Programm will not work.1
 
 ### Live recording
 
