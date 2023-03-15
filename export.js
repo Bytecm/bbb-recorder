@@ -11,6 +11,7 @@ var xvfb = new Xvfb({
     silent: true,
     xvfb_args: ["-screen", "0", "1280x800x24", "-ac", "-nolisten", "tcp", "-dpi", "96", "+extension", "RANDR"]
 });
+
 var width = 1280;
 var height = 720;
 var options = {
@@ -42,7 +43,7 @@ async function main() {
 
     try {
         if (platform == "linux") {
-            xvfb.startSync()
+            //xvfb.startSync()
         }
 
         var url = process.argv[2];
@@ -196,8 +197,12 @@ async function main() {
         })
 
         // Perform any actions that have to be captured in the exported video
-        for(var i = 0; i < duration + 60; i+=60) {
-            console.info("loading recording for " + i / 60 + " Minutes");
+        const start = process.uptime()
+        const end = start + duration
+
+        while(process.uptime() < end + 30) { // 10 seconds safety margin
+            const currentTime = process.uptime() - start
+            console.info("loading recording " + Math.round(currentTime / 60) + " Minute(s) from " + Math.round(duration / 60) + " Minute(s) " + Math.floor( (currentTime / duration) * 100) + "%");
             await page.waitFor(1000 * 60);
         }
         console.info("loading recording finished");
@@ -228,7 +233,7 @@ async function main() {
         browser.close && await browser.close()
 
         if (platform == "linux") {
-            xvfb.stopSync()
+            //xvfb.stopSync()
         }
     }
 }
